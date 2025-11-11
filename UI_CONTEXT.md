@@ -58,36 +58,11 @@
 
 **Important:** Any color picked should blend harmoniously with the light theme
 
-### Content Guidelines
-- Focus on Scout finding "live conversations" not cold leads
-- Emphasize "right place, right time" engagement
-- Scout monitors social media platforms 24/7
-- Users connect their social accounts to engage
-
 ### Development Workflow
 - Check this file before making changes
 - Use TodoWrite tool to track progress
 - Test commands should be run after changes if available
 - Commit only when explicitly asked
-
-## Current Content Strategy
-
-### Landing Page
-- Hero: "Someone just asked for what you sell"
-- Subtitle: "Scout finds real buyers asking for help, so you can be their solution"
-
-### Signup Page (How Scout Works)
-1. Scout **learns** your business - "Builds the BR[AI]N"
-2. Scout **finds** live conversations - "Across 6 social media platforms"
-3. You **engage** - "In right place, at right time"
-Bonus: **Unlock** hidden opportunities daily - "Oracle analyzes patterns"
-
-### Onboarding Stages
-- Stage 1: Discovery - "Scout learns about your business"
-- Stage 2: Config - "Tell Scout who your ideal buyers are"
-- Stage 3: Explore - "See the buyers Scout found for you"
-- Stage 4: Engage - "Scout helps you connect with buyers"
-- Stage 5: Insights - "Track your buyer engagement"
 
 ## Remember
 - ALWAYS DISCUSS CHANGES BEFORE IMPLEMENTING
