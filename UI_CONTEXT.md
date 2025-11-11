@@ -1,4 +1,4 @@
-# Claude Code Guidelines for This Project
+# UI Context & Design Guidelines
 
 ## Important Rules
 
@@ -29,10 +29,14 @@
 - **NEVER use emojis** - always use mat-icons and rarely SVGs if really required
 - When user says "use this symbol", they mean use an icon (not emoji)
 
-### Theme and Color Palette
-- **App uses WHITE theme** - all colors should blend with white backgrounds
-- Font family: Sora
+### Theme and Typography
+
+**Theme:**
+- **Use LIGHT theme** - all colors should blend with white backgrounds
 - Background: #FFFFFF
+
+**Typography:**
+- **Font family: Sora** - Use Sora font for all text
 
 #### Color Palette:
 **Primary Colors:**
@@ -52,7 +56,7 @@
 - Error dark: #CC4429 (warn-600)
 - Error light backgrounds: #FFF7F5 (warn-50), #FFEAE6 (warn-100)
 
-**Important:** Any color picked should blend harmoniously with the white theme
+**Important:** Any color picked should blend harmoniously with the light theme
 
 ### Content Guidelines
 - Focus on Scout finding "live conversations" not cold leads
@@ -90,3 +94,6 @@ Bonus: **Unlock** hidden opportunities daily - "Oracle analyzes patterns"
 - This is a React/Next.js TypeScript project
 - Tailwind CSS is available
 - Material Icons are loaded
+- **Font: Sora**
+- **Theme: Light**
+
