@@ -28,13 +28,6 @@ wget https://fn7.io/.fn7-sdk/python/vVERSION/fn7_sdk-VERSION-py3-none-any.whl
 pip install fn7_sdk-VERSION-py3-none-any.whl
 ```
 
-### Local Development
-
-```bash
-cd packages/python
-pip install -e .
-```
-
 ## Quick Start
 
 ```python
@@ -106,6 +99,8 @@ The SDK uses Firebase Admin SDK which must be initialized separately before use.
 ### Firebase Operations
 
 All methods require a `jwt_token` parameter for authentication and context extraction.
+
+For JWT token please contact the team.
 
 #### get_firebase_data
 

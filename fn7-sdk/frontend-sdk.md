@@ -29,23 +29,6 @@ FN7 SDK is a JavaScript/TypeScript library that provides Firebase operations and
 npm install @fn7/sdk
 ```
 
-### Local Development (Testing)
-
-For local testing, you can serve the SDK from a local server:
-
-```bash
-cd packages/frontend/dist
-python3 -m http.server 8082
-# or
-npx serve -p 8082
-```
-
-Then import in your code:
-
-```javascript
-const SDK = await import('http://localhost:8082/sdk.esm.js');
-```
-
 ## Quick Start
 
 ### Browser (UMD)
