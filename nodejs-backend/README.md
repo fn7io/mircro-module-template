@@ -43,22 +43,15 @@ Backend server built with FN7 SDK for Node.js, providing Firebase operations wit
 |----------|----------|-------------|
 | `FIREBASE_SERVICE_ACCOUNT_JSON` | ✅ Yes | Firebase service account JSON as a string |
 | `FIREBASE_STORAGE_BUCKET` | ❌ No | Firebase Storage bucket name (optional) |
-| `FN7_LOCAL_MODE` | ❌ No | Enable local mode (JWT tokens become optional) |
-| `NODE_ENV` | ❌ No | Set to `development` to enable local mode |
 | `PORT` | ❌ No | Server port (default: 3000) |
 
 ### Local Mode
 
-When `FN7_LOCAL_MODE=true` or `NODE_ENV=development`, the SDK automatically:
 - Makes JWT tokens optional in all methods
 - Uses hardcoded dev token if no token provided
 - No need to extract/pass JWT tokens from request headers
 - Faster development iteration
 
-**Example:**
-```javascript
-// .env
-FN7_LOCAL_MODE=true
 
 // In your code - token is optional!
 const data = await sdk.getFirebaseData('Users', 'user123'); // No token needed
@@ -148,9 +141,8 @@ const fileBuffer = await sdk.getBlobFromStorage('assets', 'document.pdf', jwtTok
 
 ## 🔐 Authentication
 
-### Local Mode (Recommended for Development)
+### Local Mode (for Development)
 
-When `FN7_LOCAL_MODE=true` or `NODE_ENV=development`:
 - JWT tokens are **optional** in all API endpoints
 - SDK automatically uses hardcoded dev token if no token provided
 - No need to pass `Authorization` header

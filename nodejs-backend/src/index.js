@@ -22,7 +22,6 @@ app.use(express.json());
  * Middleware to extract JWT token from Authorization header (optional in local mode)
  * Token format: "Bearer <token>"
  *
- * In local mode (FN7_LOCAL_MODE=true or NODE_ENV=development), token is optional.
  * SDK automatically uses hardcoded dev token if no token provided.
  */
 function extractJWTToken(req, res, next) {

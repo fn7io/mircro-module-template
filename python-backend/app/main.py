@@ -40,7 +40,7 @@ def extract_jwt_token(authorization: Optional[str] = Header(None)):
     Extract JWT token from Authorization header (optional in local mode)
     Token format: "Bearer <token>"
 
-    In local mode (FN7_LOCAL_MODE=true), token is optional and SDK uses hardcoded dev token.
+    In local, token is optional and SDK uses hardcoded dev token.
     """
     if not authorization:
         # In local mode, return None - SDK will use hardcoded token
@@ -63,7 +63,7 @@ def health():
 async def get_user(user_id: str, authorization: Optional[str] = Header(None)):
     """
     Get user data
-    In local mode (FN7_LOCAL_MODE=true), authorization header is optional.
+    In local, authorization header is optional.
     SDK automatically uses hardcoded dev token if jwt_token is None.
     """
     if not sdk:

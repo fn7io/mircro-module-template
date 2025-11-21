@@ -82,7 +82,7 @@ A micro module is a **self-contained mini-app** that plugs into the larger FN7 p
 
 ## 📦 Building a Micro Module - Complete Guide
 
-Every micro module **must have a React frontend**. You can optionally add a Python backend for APIs.
+Every micro module **must have a React frontend**. You can optionally add a **Node.js backend** or **Python backend** for APIs.
 
 ### Step 1: Create Your React Application
 
@@ -126,20 +126,48 @@ export default sdk;
 5. Click the web icon (`</>`) to add a web app
 6. Copy the `firebaseConfig` object
 
-### Step 3: Set Up Authentication
+### Step 3: Set Up Authentication (Local Mode Recommended)
 
-The Frontend SDK automatically reads authentication tokens from `localStorage`. The SDK expects:
+The Frontend SDK supports **Local Mode** for easier development. Choose the mode that fits your needs:
 
-**`localStorage.user_context`** - Contains user authentication data:
-Take this value from `.env` file please.
+#### Local Mode (Recommended for Development)
 
-**`localStorage.app_context`** - Contains application metadata:
-Take this value from `.env` file please.
+When `apiBaseUrl` is `undefined` in your environment config, the SDK automatically:
+- Uses hardcoded defaults for `user_context` and `app_context`
+- Populates `localStorage` with default values (so your app can access them)
+- No backend calls required
+- Works immediately out of the box
 
-**`localStorage.id_token`** - JWT Token:
-Take this value from `.env` file please.
+**Setup:**
+```javascript
+// src/config/environment.js (or environment.local.js)
+export const environment = {
+  firebase: { /* your Firebase config */ },
+  apiBaseUrl: undefined, // Enables local mode
+};
+```
 
-**Note:** These are typically set by the FN7 platform when your micro module is loaded. For local development, you may need to set them manually.
+#### Dev/Prod Mode
+
+When `apiBaseUrl` is provided, the SDK:
+- Requires `localStorage.user_context` and `localStorage.app_context`
+- Makes backend calls for authentication
+- Full security and custom claims support
+
+**Setup:**
+```javascript
+// src/config/environment.dev.js
+export const environment = {
+  firebase: { /* your Firebase config */ },
+  apiBaseUrl: 'https://atlas.dev2.app.fn7.io',
+};
+
+// Set localStorage (typically done by FN7 platform)
+localStorage.setItem('user_context', JSON.stringify({ /* ... */ }));
+localStorage.setItem('app_context', JSON.stringify({ /* ... */ }));
+```
+
+**Recommendation:** Use Local Mode for development, Dev/Prod Mode for testing with real backend.
 
 ### Step 4: Use the SDK in Your React Components
 
@@ -208,9 +236,31 @@ export default App;
 **Documentation:** [`fn7-sdk/frontend-sdk.md`](./fn7-sdk/frontend-sdk.md)
 **Example:** [fn7SDK-React-app](https://github.com/d1nzfn7/fn7SDK-React-app)
 
-### Step 5: Add Python Backend
+### Step 5: Add Backend (Node.js or Python)
 
-If your micro module needs backend logic, APIs, or automation:
+If your micro module needs backend logic, APIs, or automation, you can use either Node.js or Python:
+
+#### Option A: Node.js Backend (Ready-to-use template available)
+
+If you want to use Node.js, the template repository includes a ready-to-use Node.js backend in the `nodejs-backend/` folder:
+
+1. **Navigate to the nodejs-backend folder:**
+   ```bash
+   cd nodejs-backend
+   ```
+
+2. **Follow the setup instructions in `nodejs-backend/README.md`**
+
+The Node.js backend includes:
+- Express server setup
+- FN7 SDK integration
+- Example CRUD operations
+- JWT token handling
+- Docker support
+
+#### Option B: Python Backend
+
+If you prefer Python for backend logic, APIs, or automation:
 
 **5.1. Create Backend Directory Structure:**
 ```bash
@@ -226,48 +276,37 @@ source venv/bin/activate  # On Windows: venv\Scripts\activate
 
 **5.3. Install Dependencies:**
 ```bash
-pip install fn7-sdk --index-url https://fn7.io/.fn7-sdk/python/
+pip install fn7-sdk --extra-index-url https://fn7.io/.fn7-sdk/python/
 pip install fastapi uvicorn python-dotenv
 ```
 
 **5.4. Create Backend Application:**
 
-Create `backend/app/main.py`:
+The template repository includes a ready-to-use Python backend in the `python-backend/` folder. See `python-backend/README.md` for setup instructions.
+
+**Key Features:**
+- JWT tokens optional when testing in local
+- Example CRUD endpoints
+- JWT token handling (optional in local mode)
+- Error handling
+
+**Example endpoint (from `python-backend/app/main.py`):**
 ```python
 from fastapi import FastAPI, Header
 from fn7_sdk import FN7SDK
-import os
-from dotenv import load_dotenv
-
-load_dotenv()
+from typing import Optional
 
 app = FastAPI()
 sdk = FN7SDK()
 
-@app.get("/api/health")
-def health():
-    return {"status": "ok"}
+@app.get("/api/users/{user_id}")
+async def get_user(user_id: str, authorization: Optional[str] = Header(None)):
+    # Extract JWT token (optional in local mode)
+    jwt_token = authorization.replace("Bearer ", "") if authorization else None
 
-@app.post("/api/process")
-async def process_data(authorization: str = Header(None)):
-    # Extract JWT token from Authorization header
-    jwt_token = authorization if authorization else None
-
-    if not jwt_token:
-        return {"error": "Missing authorization token"}, 401
-
-    try:
-        # Fetch data using SDK
-        data = sdk.get_firebase_data("Users", "user123", jwt_token)
-
-        # Process data...
-        result = {"processed": data, "status": "success"}
-
-        # Save back using SDK
-        sdk.update_firebase_data("Users", "user123", result, jwt_token)
-        return result
-    except Exception as e:
-        return {"error": str(e)}, 500
+    # Token is optional - SDK handles it automatically in local mode
+    data = sdk.get_firebase_data("Users", user_id, jwt_token)
+    return data
 ```
 
 **5.5. Set Up Environment Variables:**
@@ -280,6 +319,12 @@ FIREBASE_SERVICE_ACCOUNT_JSON={"type":"service_account",...}
 FIREBASE_STORAGE_BUCKET=your-storage-bucket.appspot.com
 ```
 
+**Local Mode Benefits:**
+- No need to extract/pass JWT tokens from request headers
+- SDK automatically uses hardcoded dev token
+- Faster development iteration
+- Consistent test data
+
 **5.6. Run Backend:**
 ```bash
 uvicorn app.main:app --reload --port 8000
@@ -291,12 +336,12 @@ Update your React app to call your backend:
 ```javascript
 // In your React component
 const callBackend = async () => {
-  const token = JSON.parse(localStorage.user_context).id_token;
-  const response = await fetch('http://localhost:8000/api/process', {
-    method: 'POST',
+  // In local mode, Authorization header is optional
+  const response = await fetch('http://localhost:8000/api/users/user123', {
+    method: 'GET',
     headers: {
-      'Authorization': token,
       'Content-Type': 'application/json'
+      // Authorization header optional in local mode
     }
   });
   const result = await response.json();
@@ -327,13 +372,22 @@ my-micro-module/
 │   │   └── components/      # Your React components
 │   ├── package.json
 │   └── ...
-├── backend/                  # Python backend (optional)
+├── nodejs-backend/           # Node.js backend (optional)
+│   ├── src/
+│   │   ├── index.js         # Express server
+│   │   └── sdk.js           # SDK initialization
+│   ├── package.json
+│   ├── .env.example
+│   └── README.md
+├── python-backend/           # Python backend (optional)
 │   ├── app/
 │   │   └── main.py          # FastAPI application
 │   ├── .env                 # Environment variables
 │   └── requirements.txt
 └── README.md
 ```
+
+**Note:** You can use either Node.js or Python backend, or both. Delete the folders you don't need.
 
 ## 📚 SDK Documentation
 
@@ -363,13 +417,59 @@ For frontend micro modules, please refer to [`UI_CONTEXT.md`](./UI_CONTEXT.md) f
 9. ✅ **Check example implementations** - Reference the example repos
 10. ✅ **Test locally** - Run your React app and backend (if applicable)
 
+## 🚀 Local Development Mode
+
+All SDKs now support **Local Mode** - a development feature that eliminates the need for backend calls and manual token setup.
+
+### Frontend (React)
+
+**Enable Local Mode:**
+- Set `apiBaseUrl: undefined` in your `environment.js` file
+- SDK automatically uses hardcoded defaults for `user_context` and `app_context`
+- No need to manually set `localStorage.user_context` or `localStorage.app_context`
+- No backend calls, no authentication required
+
+**Example:**
+```javascript
+// src/config/environment.js
+export const environment = {
+  firebase: { /* your firebase config */ },
+  apiBaseUrl: undefined, // Local mode enabled
+};
+
+// In your component
+const sdk = new FN7SDK(environment.apiBaseUrl, environment.firebase);
+// Works immediately - no setup needed!
+```
+
+### Backend (Python/Node.js)
+
+- All SDK methods work without providing JWT tokens
+- SDK automatically uses hardcoded dev token
+
+
+# In your code
+sdk = FN7SDK()
+data = sdk.get_firebase_data("Users", "user123")  # No token needed!
+```
+
+**Benefits:**
+- ✅ Faster local development setup
+- ✅ No need to mock tokens or localStorage
+- ✅ Consistent default values across all developers
+- ✅ Works offline (no backend dependency)
+- ✅ Easy to test and iterate
+
+**Note:** Local mode is automatically disabled in dev/prod environments when proper tokens are provided.
+
 ## ⚠️ Important Notes
 
 - **Never push directly to this template repository** - Always create a new repository first
 - **Firebase Configuration Required** - Both SDKs need proper Firebase setup
-- **Authentication** - Frontend SDK reads tokens from `localStorage.user_context` and `localStorage.app_context`
-- **Backend Authentication** - Python backend requires JWT token passed in `Authorization` header. Can be found in `.env` file
-- **Environment Variables** - Python backend needs Firebase service account credentials
+- **Local Mode Recommended** - Use Local Mode for development to get started faster
+- **Authentication** - In Local Mode, authentication is automatic. In Dev/Prod mode, Frontend SDK reads tokens from `localStorage.user_context` and `localStorage.app_context`
+- **Backend Authentication** - In Local Mode, JWT tokens are optional. In Dev/Prod mode, Python/Node.js backends require JWT token passed in `Authorization` header
+- **Environment Variables** - Backends need Firebase service account credentials
 - **UI Guidelines** - Follow the UI guidelines for frontend modules (Sora font, light theme)
 - **Review Examples** - Check the example implementations for best practices
 

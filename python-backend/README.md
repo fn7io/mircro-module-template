@@ -21,7 +21,7 @@ Backend server built with FN7 SDK for Python, providing Firebase operations with
 2. **Install dependencies**
    ```bash
    # Install fn7-sdk from custom registry
-   pip install fn7-sdk --index-url https://fn7.io/.fn7-sdk/python/
+   pip install fn7-sdk --extra-index-url https://fn7.io/.fn7-sdk/python/
 
    # Install other dependencies
    pip install -r requirements.txt
@@ -57,8 +57,6 @@ Backend server built with FN7 SDK for Python, providing Firebase operations with
 | `FIREBASE_SERVICE_ACCOUNT_JSON` | ✅ Yes* | Firebase service account JSON as a string |
 | `FIREBASE_SERVICE_ACCOUNT_PATH` | ✅ Yes* | Path to Firebase service account JSON file |
 | `FIREBASE_STORAGE_BUCKET` | ❌ No | Firebase Storage bucket name (optional) |
-| `FN7_LOCAL_MODE` | ❌ No | Enable local mode (JWT tokens become optional) |
-| `ENV` | ❌ No | Set to `development` to enable local mode |
 | `PORT` | ❌ No | Server port (default: 8000) |
 | `HOST` | ❌ No | Server host (default: 0.0.0.0) |
 
@@ -66,16 +64,11 @@ Backend server built with FN7 SDK for Python, providing Firebase operations with
 
 ### Local Mode
 
-When `FN7_LOCAL_MODE=true` or `ENV=development`, the SDK automatically:
 - Makes JWT tokens optional in all methods
 - Uses hardcoded dev token if no token provided
 - No need to extract/pass JWT tokens from request headers
 - Faster development iteration
 
-**Example:**
-```python
-# .env
-FN7_LOCAL_MODE=true
 
 # In your code - token is optional!
 data = sdk.get_firebase_data("Users", "user123")  # No token needed
@@ -167,9 +160,8 @@ file_buffer = sdk.get_blob_from_storage("assets", "document.pdf", jwt_token)
 
 ## 🔐 Authentication
 
-### Local Mode (Recommended for Development)
+### Local Mode (for Development)
 
-When `FN7_LOCAL_MODE=true` or `ENV=development`:
 - JWT tokens are **optional** in all API endpoints
 - SDK automatically uses hardcoded dev token if no token provided
 - No need to pass `Authorization` header

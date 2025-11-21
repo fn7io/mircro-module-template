@@ -9,7 +9,7 @@ COPY requirements.txt .
 
 # Install dependencies
 # Install fn7-sdk from custom registry first
-RUN pip install --no-cache-dir fn7-sdk --index-url https://fn7.io/.fn7-sdk/python/
+RUN pip install --no-cache-dir fn7-sdk --extra-index-url https://fn7.io/.fn7-sdk/python/
 # Install other dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
