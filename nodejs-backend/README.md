@@ -43,8 +43,26 @@ Backend server built with FN7 SDK for Node.js, providing Firebase operations wit
 |----------|----------|-------------|
 | `FIREBASE_SERVICE_ACCOUNT_JSON` | ✅ Yes | Firebase service account JSON as a string |
 | `FIREBASE_STORAGE_BUCKET` | ❌ No | Firebase Storage bucket name (optional) |
+| `FN7_LOCAL_MODE` | ❌ No | Enable local mode (JWT tokens become optional) |
+| `NODE_ENV` | ❌ No | Set to `development` to enable local mode |
 | `PORT` | ❌ No | Server port (default: 3000) |
-| `NODE_ENV` | ❌ No | Environment (development/production) |
+
+### Local Mode
+
+When `FN7_LOCAL_MODE=true` or `NODE_ENV=development`, the SDK automatically:
+- Makes JWT tokens optional in all methods
+- Uses hardcoded dev token if no token provided
+- No need to extract/pass JWT tokens from request headers
+- Faster development iteration
+
+**Example:**
+```javascript
+// .env
+FN7_LOCAL_MODE=true
+
+// In your code - token is optional!
+const data = await sdk.getFirebaseData('Users', 'user123'); // No token needed
+```
 
 ### Getting Firebase Service Account JSON
 
@@ -64,7 +82,8 @@ Backend server built with FN7 SDK for Node.js, providing Firebase operations wit
 const { getSDK } = require('./sdk');
 
 const sdk = getSDK();
-const jwtToken = 'your-jwt-token'; // Extract from request headers
+// In local mode, jwtToken is optional - SDK uses hardcoded dev token automatically
+const jwtToken = undefined; // Optional in local mode
 
 // Read data
 const user = await sdk.getFirebaseData('Users', 'user123', jwtToken);
@@ -88,6 +107,7 @@ await sdk.deleteFirebaseData('Chats', 'chat456', jwtToken);
 
 ```javascript
 const utils = sdk.getFirestoreUtilities();
+const jwtToken = undefined; // Optional in local mode
 
 await sdk.updateFirebaseData('Users', 'user123', {
   loginCount: utils.increment(1),
@@ -98,6 +118,8 @@ await sdk.updateFirebaseData('Users', 'user123', {
 ### Storage Operations
 
 ```javascript
+const jwtToken = undefined; // Optional in local mode
+
 // Upload files
 const fileNames = ['image.jpg', 'document.pdf'];
 const fileBuffers = [buffer1, buffer2];
@@ -126,17 +148,26 @@ const fileBuffer = await sdk.getBlobFromStorage('assets', 'document.pdf', jwtTok
 
 ## 🔐 Authentication
 
-All API endpoints require a JWT token in the `Authorization` header:
+### Local Mode (Recommended for Development)
 
-```
-Authorization: Bearer <your-jwt-token>
-```
+When `FN7_LOCAL_MODE=true` or `NODE_ENV=development`:
+- JWT tokens are **optional** in all API endpoints
+- SDK automatically uses hardcoded dev token if no token provided
+- No need to pass `Authorization` header
+- Works immediately out of the box
 
-The JWT token should contain the following claims:
-- `user_id`
-- `org_hkey`
-- `application_id`
-- Other claims as required by your Firebase security rules
+### Dev/Prod Mode
+
+When Local Mode is disabled:
+- All API endpoints require a JWT token in the `Authorization` header:
+  ```
+  Authorization: Bearer <your-jwt-token>
+  ```
+- The JWT token should contain the following claims:
+  - `user_id`
+  - `org_hkey`
+  - `application_id`
+  - Other claims as required by your Firebase security rules
 
 ## 🛠️ Development
 

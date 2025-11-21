@@ -57,10 +57,29 @@ Backend server built with FN7 SDK for Python, providing Firebase operations with
 | `FIREBASE_SERVICE_ACCOUNT_JSON` | ✅ Yes* | Firebase service account JSON as a string |
 | `FIREBASE_SERVICE_ACCOUNT_PATH` | ✅ Yes* | Path to Firebase service account JSON file |
 | `FIREBASE_STORAGE_BUCKET` | ❌ No | Firebase Storage bucket name (optional) |
+| `FN7_LOCAL_MODE` | ❌ No | Enable local mode (JWT tokens become optional) |
+| `ENV` | ❌ No | Set to `development` to enable local mode |
 | `PORT` | ❌ No | Server port (default: 8000) |
 | `HOST` | ❌ No | Server host (default: 0.0.0.0) |
 
 *Either `FIREBASE_SERVICE_ACCOUNT_JSON` or `FIREBASE_SERVICE_ACCOUNT_PATH` is required.
+
+### Local Mode
+
+When `FN7_LOCAL_MODE=true` or `ENV=development`, the SDK automatically:
+- Makes JWT tokens optional in all methods
+- Uses hardcoded dev token if no token provided
+- No need to extract/pass JWT tokens from request headers
+- Faster development iteration
+
+**Example:**
+```python
+# .env
+FN7_LOCAL_MODE=true
+
+# In your code - token is optional!
+data = sdk.get_firebase_data("Users", "user123")  # No token needed
+```
 
 ### Getting Firebase Service Account JSON
 
@@ -107,6 +126,7 @@ from fn7_sdk import FN7SDK
 
 sdk = FN7SDK()
 utils = sdk.get_firestore_utilities()
+jwt_token = None  # Optional in local mode
 
 sdk.update_firebase_data("Users", "user123", {
     "login_count": utils.increment(1),
@@ -117,6 +137,8 @@ sdk.update_firebase_data("Users", "user123", {
 ### Storage Operations
 
 ```python
+jwt_token = None  # Optional in local mode
+
 # Upload files
 file_names = ["image.jpg", "document.pdf"]
 file_buffers = [buffer1, buffer2]  # List of bytes or base64 strings
@@ -145,17 +167,26 @@ file_buffer = sdk.get_blob_from_storage("assets", "document.pdf", jwt_token)
 
 ## 🔐 Authentication
 
-All API endpoints require a JWT token in the `Authorization` header:
+### Local Mode (Recommended for Development)
 
-```
-Authorization: Bearer <your-jwt-token>
-```
+When `FN7_LOCAL_MODE=true` or `ENV=development`:
+- JWT tokens are **optional** in all API endpoints
+- SDK automatically uses hardcoded dev token if no token provided
+- No need to pass `Authorization` header
+- Works immediately out of the box
 
-The JWT token should contain the following claims:
-- `user_id`
-- `org_hkey`
-- `application_id`
-- Other claims as required by your Firebase security rules
+### Dev/Prod Mode
+
+When Local Mode is disabled:
+- All API endpoints require a JWT token in the `Authorization` header:
+  ```
+  Authorization: Bearer <your-jwt-token>
+  ```
+- The JWT token should contain the following claims:
+  - `user_id`
+  - `org_hkey`
+  - `application_id`
+  - Other claims as required by your Firebase security rules
 
 ## 🛠️ Development
 

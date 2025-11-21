@@ -19,14 +19,19 @@ app.use(cors());
 app.use(express.json());
 
 /**
- * Middleware to extract JWT token from Authorization header
+ * Middleware to extract JWT token from Authorization header (optional in local mode)
  * Token format: "Bearer <token>"
+ *
+ * In local mode (FN7_LOCAL_MODE=true or NODE_ENV=development), token is optional.
+ * SDK automatically uses hardcoded dev token if no token provided.
  */
 function extractJWTToken(req, res, next) {
   const authHeader = req.headers.authorization;
 
+  // In local mode, token is optional - SDK will use hardcoded dev token
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    res.status(401).json({ error: 'Missing or invalid Authorization header' });
+    req.jwtToken = undefined; // SDK will handle this in local mode
+    next();
     return;
   }
 
