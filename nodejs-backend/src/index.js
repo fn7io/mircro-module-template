@@ -19,24 +19,24 @@ app.use(cors());
 app.use(express.json());
 
 /**
- * Middleware to extract JWT token from Authorization header (optional in local mode)
+ * Middleware to extract authContext (JWT token) from Authorization header (optional in local mode)
  * Token format: "Bearer <token>"
  *
  * SDK automatically uses hardcoded dev token if no token provided.
  */
-function extractJWTToken(req, res, next) {
+function extractAuthContext(req, res, next) {
   const authHeader = req.headers.authorization;
 
-  // In local mode, token is optional - SDK will use hardcoded dev token
+  // In local mode, authContext is optional - SDK will use hardcoded dev token
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    req.jwtToken = undefined; // SDK will handle this in local mode
+    req.authContext = undefined; // SDK will handle this in local mode
     next();
     return;
   }
 
   // Extract token and attach to request object
   const token = authHeader.substring(7); // Remove "Bearer " prefix
-  req.jwtToken = token;
+  req.authContext = token;
   next();
 }
 
@@ -74,12 +74,12 @@ app.get('/health', (req, res) => {
  * GET /users/:userId
  * Get user data
  */
-app.get('/users/:userId', extractJWTToken, async (req, res, next) => {
+app.get('/users/:userId', extractAuthContext, async (req, res, next) => {
   try {
     const { userId } = req.params;
-    const jwtToken = req.jwtToken;
+    const authContext = req.authContext;
 
-    const userData = await sdk.getFirebaseData('Users', userId, jwtToken);
+    const userData = await sdk.getFirebaseData('Users', userId, authContext);
     res.json(userData);
   } catch (error) {
     next(error);
@@ -90,13 +90,13 @@ app.get('/users/:userId', extractJWTToken, async (req, res, next) => {
  * POST /users/:userId
  * Create user data
  */
-app.post('/users/:userId', extractJWTToken, async (req, res, next) => {
+app.post('/users/:userId', extractAuthContext, async (req, res, next) => {
   try {
     const { userId } = req.params;
     const { data } = req.body;
-    const jwtToken = req.jwtToken;
+    const authContext = req.authContext;
 
-    const result = await sdk.createFirebaseData('Users', userId, data, jwtToken);
+    const result = await sdk.createFirebaseData('Users', userId, data, authContext);
     res.status(201).json(result);
   } catch (error) {
     next(error);
@@ -107,13 +107,13 @@ app.post('/users/:userId', extractJWTToken, async (req, res, next) => {
  * PUT /users/:userId
  * Update user data
  */
-app.put('/users/:userId', extractJWTToken, async (req, res, next) => {
+app.put('/users/:userId', extractAuthContext, async (req, res, next) => {
   try {
     const { userId } = req.params;
     const { data } = req.body;
-    const jwtToken = req.jwtToken;
+    const authContext = req.authContext;
 
-    const result = await sdk.updateFirebaseData('Users', userId, data, jwtToken);
+    const result = await sdk.updateFirebaseData('Users', userId, data, authContext);
     res.json(result);
   } catch (error) {
     next(error);
@@ -124,12 +124,12 @@ app.put('/users/:userId', extractJWTToken, async (req, res, next) => {
  * DELETE /users/:userId
  * Delete user data
  */
-app.delete('/users/:userId', extractJWTToken, async (req, res, next) => {
+app.delete('/users/:userId', extractAuthContext, async (req, res, next) => {
   try {
     const { userId } = req.params;
-    const jwtToken = req.jwtToken;
+    const authContext = req.authContext;
 
-    await sdk.deleteFirebaseData('Users', userId, jwtToken);
+    await sdk.deleteFirebaseData('Users', userId, authContext);
     res.status(204).send();
   } catch (error) {
     next(error);
@@ -140,14 +140,14 @@ app.delete('/users/:userId', extractJWTToken, async (req, res, next) => {
  * POST /storage/upload
  * Upload files to Firebase Storage
  */
-app.post('/storage/upload', extractJWTToken, async (req, res, next) => {
+app.post('/storage/upload', extractAuthContext, async (req, res, next) => {
   try {
     // Note: This is a simplified example
     // In production, you'd handle file uploads using multer or similar
-    const { fileNames, fileBuffers } = req.body;
-    const jwtToken = req.jwtToken;
+    const { fileNames, fileBuffers, folder } = req.body;
+    const authContext = req.authContext;
 
-    const urls = await sdk.uploadToStorage(fileNames, fileBuffers, jwtToken);
+    const urls = await sdk.uploadToStorage(fileNames, fileBuffers, folder || 'uploads', authContext);
     res.json({ urls });
   } catch (error) {
     next(error);

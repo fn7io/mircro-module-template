@@ -47,13 +47,20 @@ Backend server built with FN7 SDK for Node.js, providing Firebase operations wit
 
 ### Local Mode
 
-- Makes JWT tokens optional in all methods
+When `mode: 'local'` is set in the SDK config:
+- Makes `authContext` (JWT token) optional in all methods
 - Uses hardcoded dev token if no token provided
 - No need to extract/pass JWT tokens from request headers
 - Faster development iteration
 
+```javascript
+// Initialize SDK with local mode
+const sdk = new FN7SDK({
+  mode: 'local',
+  storageBucketName: 'your-bucket'
+});
 
-// In your code - token is optional!
+// In your code - authContext is optional!
 const data = await sdk.getFirebaseData('Users', 'user123'); // No token needed
 ```
 
@@ -74,55 +81,55 @@ const data = await sdk.getFirebaseData('Users', 'user123'); // No token needed
 ```javascript
 const { getSDK } = require('./sdk');
 
-const sdk = getSDK();
-// In local mode, jwtToken is optional - SDK uses hardcoded dev token automatically
-const jwtToken = undefined; // Optional in local mode
+const sdk = getSDK({ mode: 'local' });
+// In local mode, authContext is optional - SDK uses hardcoded dev token automatically
+const authContext = undefined; // Optional in local mode
 
 // Read data
-const user = await sdk.getFirebaseData('Users', 'user123', jwtToken);
+const user = await sdk.getFirebaseData('Users', 'user123', authContext);
 
 // Create data
 const newChat = await sdk.createFirebaseData('Chats', 'chat456', {
   message: 'Hello',
   timestamp: Date.now()
-}, jwtToken);
+}, authContext);
 
 // Update data
 const updated = await sdk.updateFirebaseData('Chats', 'chat456', {
   message: 'Updated message'
-}, jwtToken);
+}, authContext);
 
 // Delete data
-await sdk.deleteFirebaseData('Chats', 'chat456', jwtToken);
+await sdk.deleteFirebaseData('Chats', 'chat456', authContext);
 ```
 
 ### Atomic Increments
 
 ```javascript
 const utils = sdk.getFirestoreUtilities();
-const jwtToken = undefined; // Optional in local mode
+const authContext = undefined; // Optional in local mode
 
 await sdk.updateFirebaseData('Users', 'user123', {
   loginCount: utils.increment(1),
   score: utils.increment(10)
-}, jwtToken);
+}, authContext);
 ```
 
 ### Storage Operations
 
 ```javascript
-const jwtToken = undefined; // Optional in local mode
+const authContext = undefined; // Optional in local mode
 
 // Upload files
 const fileNames = ['image.jpg', 'document.pdf'];
 const fileBuffers = [buffer1, buffer2];
-const urls = await sdk.uploadToStorage(fileNames, fileBuffers, jwtToken);
+const urls = await sdk.uploadToStorage(fileNames, fileBuffers, 'assets', authContext);
 
 // Get download URL
-const downloadUrl = await sdk.getFromStorage('assets', 'image.jpg', jwtToken);
+const downloadUrl = await sdk.getFromStorage('assets', 'image.jpg', authContext);
 
 // Get file as Buffer
-const fileBuffer = await sdk.getBlobFromStorage('assets', 'document.pdf', jwtToken);
+const fileBuffer = await sdk.getBlobFromStorage('assets', 'document.pdf', authContext);
 ```
 
 ## 📚 API Endpoints
@@ -143,15 +150,24 @@ const fileBuffer = await sdk.getBlobFromStorage('assets', 'document.pdf', jwtTok
 
 ### Local Mode (for Development)
 
-- JWT tokens are **optional** in all API endpoints
+When SDK is initialized with `mode: 'local'`:
+- `authContext` (JWT token) is **optional** in all API endpoints
 - SDK automatically uses hardcoded dev token if no token provided
 - No need to pass `Authorization` header
 - Works immediately out of the box
 
-### Dev/Prod Mode
+```javascript
+const sdk = new FN7SDK({
+  mode: 'local',
+  storageBucketName: 'your-bucket'
+});
+```
 
-When Local Mode is disabled:
-- All API endpoints require a JWT token in the `Authorization` header:
+### Server Mode (Dev/Prod)
+
+When SDK is initialized with `mode: 'server'`:
+- All API endpoints require `authContext` (JWT token)
+- Extract from `Authorization` header and pass to SDK methods:
   ```
   Authorization: Bearer <your-jwt-token>
   ```
@@ -160,6 +176,17 @@ When Local Mode is disabled:
   - `org_hkey`
   - `application_id`
   - Other claims as required by your Firebase security rules
+
+```javascript
+const sdk = new FN7SDK({
+  mode: 'server',
+  storageBucketName: 'your-bucket'
+});
+
+// In your endpoint
+const authContext = req.headers.authorization?.replace('Bearer ', '');
+const data = await sdk.getFirebaseData('Users', 'user123', authContext);
+```
 
 ## 🛠️ Development
 

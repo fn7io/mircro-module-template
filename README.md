@@ -112,8 +112,12 @@ const firebaseConfig = {
   appId: "your-app-id"
 };
 
-// Initialize SDK
-const sdk = new FN7SDK(undefined, firebaseConfig);
+// Initialize SDK with unified config object
+const sdk = new FN7SDK({
+  mode: 'local',  // 'local' for development, 'server' for production
+  firebaseConfig: firebaseConfig,
+  apiBaseUrl: undefined  // Only needed in 'server' mode
+});
 
 export default sdk;
 ```
@@ -128,14 +132,14 @@ export default sdk;
 
 ### Step 3: Set Up Authentication (Local Mode Recommended)
 
-The Frontend SDK supports **Local Mode** for easier development. Choose the mode that fits your needs:
+The Frontend SDK supports two modes. Choose the mode that fits your needs:
 
 #### Local Mode (Recommended for Development)
 
-When `apiBaseUrl` is `undefined` in your environment config, the SDK automatically:
+When `mode: 'local'` is set, the SDK automatically:
+- Skips backend authentication calls
 - Uses hardcoded defaults for `user_context` and `app_context`
 - Populates `localStorage` with default values (so your app can access them)
-- No backend calls required
 - Works immediately out of the box
 
 **Setup:**
@@ -143,13 +147,19 @@ When `apiBaseUrl` is `undefined` in your environment config, the SDK automatical
 // src/config/environment.js (or environment.local.js)
 export const environment = {
   firebase: { /* your Firebase config */ },
-  apiBaseUrl: undefined, // Enables local mode
+  apiBaseUrl: undefined, // Not needed in local mode
 };
+
+// In sdk.js
+const sdk = new FN7SDK({
+  mode: 'local',
+  firebaseConfig: environment.firebase
+});
 ```
 
-#### Dev/Prod Mode
+#### Server Mode (Dev/Prod)
 
-When `apiBaseUrl` is provided, the SDK:
+When `mode: 'server'` is set, the SDK:
 - Requires `localStorage.user_context` and `localStorage.app_context`
 - Makes backend calls for authentication
 - Full security and custom claims support
@@ -162,12 +172,19 @@ export const environment = {
   apiBaseUrl: 'https://atlas.dev2.app.fn7.io',
 };
 
+// In sdk.js
+const sdk = new FN7SDK({
+  mode: 'server',
+  firebaseConfig: environment.firebase,
+  apiBaseUrl: environment.apiBaseUrl
+});
+
 // Set localStorage (typically done by FN7 platform)
 localStorage.setItem('user_context', JSON.stringify({ /* ... */ }));
 localStorage.setItem('app_context', JSON.stringify({ /* ... */ }));
 ```
 
-**Recommendation:** Use Local Mode for development, Dev/Prod Mode for testing with real backend.
+**Recommendation:** Use Local Mode for development, Server Mode for testing with real backend.
 
 ### Step 4: Use the SDK in Your React Components
 
@@ -424,30 +441,46 @@ All SDKs now support **Local Mode** - a development feature that eliminates the 
 ### Frontend (React)
 
 **Enable Local Mode:**
-- Set `apiBaseUrl: undefined` in your `environment.js` file
+- Set `mode: 'local'` in your SDK config
 - SDK automatically uses hardcoded defaults for `user_context` and `app_context`
 - No need to manually set `localStorage.user_context` or `localStorage.app_context`
 - No backend calls, no authentication required
 
 **Example:**
 ```javascript
-// src/config/environment.js
-export const environment = {
-  firebase: { /* your firebase config */ },
-  apiBaseUrl: undefined, // Local mode enabled
-};
+// src/sdk.js
+import FN7SDK from 'https://fn7.io/.fn7-sdk/frontend/latest/sdk.esm.js';
+import { environment } from './config/environment';
 
-// In your component
-const sdk = new FN7SDK(environment.apiBaseUrl, environment.firebase);
+const sdk = new FN7SDK({
+  mode: 'local',  // Local mode enabled
+  firebaseConfig: environment.firebase
+});
 // Works immediately - no setup needed!
 ```
 
-### Backend (Python/Node.js)
+### Backend (Node.js)
+
+**Enable Local Mode:**
+- Set `mode: 'local'` in your SDK config
+- `authContext` (JWT token) becomes optional in all methods
+- SDK automatically uses hardcoded dev token if no token provided
+
+```javascript
+// In your code
+const sdk = new FN7SDK({
+  mode: 'local',
+  storageBucketName: 'your-bucket'
+});
+const data = await sdk.getFirebaseData('Users', 'user123');  // authContext optional!
+```
+
+### Backend (Python)
 
 - All SDK methods work without providing JWT tokens
 - SDK automatically uses hardcoded dev token
 
-
+```python
 # In your code
 sdk = FN7SDK()
 data = sdk.get_firebase_data("Users", "user123")  # No token needed!
@@ -468,7 +501,7 @@ data = sdk.get_firebase_data("Users", "user123")  # No token needed!
 - **Firebase Configuration Required** - Both SDKs need proper Firebase setup
 - **Local Mode Recommended** - Use Local Mode for development to get started faster
 - **Authentication** - In Local Mode, authentication is automatic. In Dev/Prod mode, Frontend SDK reads tokens from `localStorage.user_context` and `localStorage.app_context`
-- **Backend Authentication** - In Local Mode, JWT tokens are optional. In Dev/Prod mode, Python/Node.js backends require JWT token passed in `Authorization` header
+- **Backend Authentication** - In Local Mode, `authContext` (JWT tokens) is optional. In Server mode, Python/Node.js backends require JWT token passed as `authContext` parameter
 - **Environment Variables** - Backends need Firebase service account credentials
 - **UI Guidelines** - Follow the UI guidelines for frontend modules (Sora font, light theme)
 - **Review Examples** - Check the example implementations for best practices

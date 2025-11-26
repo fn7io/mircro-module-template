@@ -71,11 +71,10 @@ export const environment = {
 5. Click the web icon (`</>`) to add a web app
 6. Copy the `firebaseConfig` object values to your `environment.js` file
 
-### Local Mode vs Dev/Prod Mode
+### Local Mode vs Server Mode
 
-- **Local Mode** (`apiBaseUrl: undefined`): No backend calls, automatic defaults, works immediately
-- **Dev Mode** (`apiBaseUrl: 'https://atlas.dev2.app.fn7.io'`): Backend calls enabled, requires authentication
-- **Prod Mode** (`apiBaseUrl: 'https://api.prod.fn7.io'`): Production backend, requires authentication
+- **Local Mode** (`mode: 'local'`): No backend calls, automatic defaults, works immediately
+- **Server Mode** (`mode: 'server'`): Backend calls enabled, requires authentication and `apiBaseUrl`
 
 ## 🔐 Authentication
 
@@ -83,35 +82,42 @@ The Frontend SDK supports two modes:
 
 ### Local Mode (Recommended for Development)
 
-When `apiBaseUrl` is `undefined` in your environment config, the SDK automatically:
+When `mode: 'local'` is set in the SDK config, it automatically:
+- Skips backend authentication calls
 - Uses hardcoded defaults for `user_context` and `app_context`
 - Populates `localStorage` with default values (so your app can access them)
-- No backend calls required
 - Works immediately out of the box
 
 **Setup:**
 ```javascript
-// src/config/environment.js
-export const environment = {
-  firebase: { /* your Firebase config */ },
-  apiBaseUrl: undefined, // Enables local mode
-};
+// src/sdk.js
+import FN7SDK from 'https://fn7.io/.fn7-sdk/frontend/latest/sdk.esm.js';
+import { environment } from './config/environment';
+
+const sdk = new FN7SDK({
+  mode: 'local',  // Enables local mode
+  firebaseConfig: environment.firebase
+});
 ```
 
-### Dev/Prod Mode
+### Server Mode (Dev/Prod)
 
-When `apiBaseUrl` is provided, the SDK:
+When `mode: 'server'` is set, the SDK:
 - Requires `localStorage.user_context` and `localStorage.app_context`
 - Makes backend calls for authentication
 - Full security and custom claims support
 
 **Setup:**
 ```javascript
-// src/config/environment.dev.js
-export const environment = {
-  firebase: { /* your Firebase config */ },
-  apiBaseUrl: 'https://atlas.dev2.app.fn7.io',
-};
+// src/sdk.js
+import FN7SDK from 'https://fn7.io/.fn7-sdk/frontend/latest/sdk.esm.js';
+import { environment } from './config/environment.dev';
+
+const sdk = new FN7SDK({
+  mode: 'server',  // Server mode
+  firebaseConfig: environment.firebase,
+  apiBaseUrl: environment.apiBaseUrl
+});
 
 // Set localStorage (typically done by FN7 platform)
 localStorage.setItem('user_context', JSON.stringify({
@@ -126,7 +132,7 @@ localStorage.setItem('app_context', JSON.stringify({
 }));
 ```
 
-**Recommendation:** Use Local Mode for development, Dev/Prod Mode for testing with real backend.
+**Recommendation:** Use Local Mode for development, Server Mode for testing with real backend.
 
 ## 🔧 Usage Examples
 
@@ -313,14 +319,33 @@ export const environment = {
     messagingSenderId: '123456789',
     appId: 'your-app-id',
   },
-  apiBaseUrl: undefined, // Local Mode enabled
+  apiBaseUrl: undefined, // Not needed in local mode
 };
 
-// Dev/Prod Mode (environment.dev.js or environment.prod.js)
+// Server Mode (environment.dev.js or environment.prod.js)
 export const environment = {
   firebase: { /* same structure */ },
-  apiBaseUrl: 'https://atlas.dev2.app.fn7.io', // Backend calls enabled
+  apiBaseUrl: 'https://atlas.dev2.app.fn7.io', // Used in server mode
 };
+```
+
+**SDK Initialization:**
+
+```javascript
+// src/sdk.js
+import FN7SDK from 'https://fn7.io/.fn7-sdk/frontend/latest/sdk.esm.js';
+import { environment } from './config/environment';
+
+// Determine mode based on apiBaseUrl
+const mode = environment.apiBaseUrl ? 'server' : 'local';
+
+const sdk = new FN7SDK({
+  mode: mode,
+  firebaseConfig: environment.firebase,
+  apiBaseUrl: environment.apiBaseUrl
+});
+
+export default sdk;
 ```
 
 This pattern is described in detail in the [FN7 SDK Documentation](../fn7-sdk/frontend-sdk.md#environment-configuration).
