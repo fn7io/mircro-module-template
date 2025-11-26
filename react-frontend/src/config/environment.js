@@ -22,9 +22,7 @@ export const environment = {
     appId: 'your-local-app-id',
     measurementId: 'your-local-measurement-id',
   },
-  // Set to undefined for local mode (no backend calls, automatic defaults)
   // Set to 'https://atlas.dev2.app.fn7.io' for dev environment
-  // Set to 'https://api.prod.fn7.io' for production
-  apiBaseUrl: undefined, // Local mode enabled
+  // apiBaseUrl: undefined, // Local mode enabled
 };
 
